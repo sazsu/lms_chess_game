@@ -23,7 +23,7 @@ class Queen:
                 if board.get_piece(row, c) is not None:
                     return False
 
-        else:  # диагональная проверка
+        elif row != row1 and col != col1:  # диагональная проверка
             row_step = 1 if row1 > row else -1
             col_step = 1 if col1 > col else -1
             r, c = row + row_step, col + col_step
