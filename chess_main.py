@@ -265,6 +265,31 @@ class Board:
         self.color = opponent(self.color)
         return True
 
+    def move_and_promote_pawn(self, row, col, row1, col1, char):
+        # проверяем, что фигура является пешкой
+        if self.field[row][col].__class__.__name__ != 'Pawn':
+            return False
+        # проверяем, что можно сходить до конца доски
+        if not self.move_piece(row, col, row1, col1):
+            return False
+
+        # ходим пешкой
+        self.move_piece(row, col, row1, col1)
+        color = self.field[row1][col1].color
+        if char == 'Q':
+            # меняем пешку на ферзя соответствующего цвета
+            self.field[row1][col1] = Queen(color)
+        elif char == 'R':
+            # меняем пешку на ладью соответствующего цвета
+            self.field[row1][col1] = Rook(color)
+        elif char == 'B':
+            # меняем пешку на слона соответствующего цвета
+            self.field[row1][col1] = Bishop(color)
+        elif char == 'N':
+            # меняем пешку на коня соответствующего цвета
+            self.field[row1][col1] = Knight(color)
+        return True
+
     def get_piece(self, row, col):
         return self.field[row][col]
 
