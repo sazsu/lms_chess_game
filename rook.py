@@ -25,6 +25,8 @@ class Rook:
             # Если на пути по горизонтали есть фигура
             if board.get_piece(row, c) is not None:
                 return False
+
+        # путь свободен
         return True
 
     def can_attack(self, board, row, col, row1, col1):
