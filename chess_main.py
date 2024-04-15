@@ -43,6 +43,7 @@ class Pawn:
 class Rook:
     def __init__(self, color):
         self.color = color
+        self.was_moved = False
 
     def get_color(self):
         return self.color
@@ -56,17 +57,20 @@ class Rook:
         if row != row1 and col != col1:
             return False
 
-        step = 1 if row1 > row else -1
-        for r in range(row + step, row1, step):
-            # Если на пути по вертикали есть фигура
-            if board.get_piece(r, col) is not None:
-                return False
+        if col == col1:  # вертикальная проверка
+            step = 1 if row1 >= row else -1
+            for r in range(row + step, row1 + step, step):
+                # Если на пути по вертикали есть фигура
+                if board.get_piece(r, col) is not None:
+                    return False
 
-        step = 1 if col1 >= col else -1
-        for c in range(col + step, col1, step):
-            # Если на пути по горизонтали есть фигура
-            if board.get_piece(row, c) is not None:
-                return False
+        elif row == row1:  # горизонтальная проверка
+            step = 1 if col1 >= col else -1
+            for c in range(col + step, col1 + step, step):
+                # Если на пути по горизонтали есть фигура
+                if board.get_piece(row, c) is not None:
+                    return False
+        # путь свободен
         return True
 
     def can_attack(self, board, row, col, row1, col1):
@@ -101,6 +105,9 @@ class Bishop:
             r += row_step
             c += col_step
 
+        # путь свободен
+        return True
+
     def can_attack(self, board, row, col, row1, col1):
         return self.can_move(board, row, col, row1, col1)
 
@@ -108,6 +115,7 @@ class Bishop:
 class King:
     def __init__(self, color):
         self.color = color
+        self.was_moved = False
 
     def get_color(self):
         return self.color
@@ -195,6 +203,7 @@ class Knight:
             return False
         if abs(row - row1) + abs(col - col1) != 3:
             return False
+        # путь свободен
         return True
 
     def can_attack(self, board, row, col, row1, col1):
@@ -263,6 +272,10 @@ class Board:
         self.field[row][col] = None  # Снять фигуру.
         self.field[row1][col1] = piece  # Поставить на новое место.
         self.color = opponent(self.color)
+
+        # для рокировки
+        if piece.__class__.__name__ == 'Rook' or piece.__class__.__name__ == 'King':
+            piece.was_moved = True
         return True
 
     def move_and_promote_pawn(self, row, col, row1, col1, char):
@@ -288,6 +301,66 @@ class Board:
         elif char == 'N':
             # меняем пешку на коня соответствующего цвета
             self.field[row1][col1] = Knight(color)
+        return True
+
+    def castling0(self):
+        row = 0 if self.color == WHITE else 7
+        rook = self.field[row][0]
+        king = self.field[row][4]
+
+        # проверяем, что это нужные фигуры и фигуры не ходили
+        if (
+                rook.__class__.__name__ != 'Rook' or king.__class__.__name__ != 'King' or
+                king.was_moved or rook.was_moved
+        ):
+            return False
+
+        # проверяем, что пути свободны
+        if any(self.field[row][i] is not None for i in range(1, 4)):
+            return False
+
+        # перемещаем короля и ладью
+        self.field[row][3] = rook
+        self.field[row][2] = king
+        self.field[row][4] = None
+        self.field[row][0] = None
+
+        # фигурами походили
+        rook.was_moved = True
+        king.was_moved = True
+
+        # меняем цвет игрока
+        self.color = WHITE if self.color == BLACK else BLACK
+        return True
+
+    def castling7(self):
+        row = 0 if self.color == WHITE else 7
+        rook = self.field[row][7]
+        king = self.field[row][4]
+
+        # проверяем, что это нужные фигуры и фигуры не ходили
+        if (
+                rook.__class__.__name__ != 'Rook' or king.__class__.__name__ != 'King' or
+                king.was_moved or rook.was_moved
+        ):
+            return False
+
+        # проверяем, что пути свободны
+        if any(self.field[row][i] is not None for i in range(5, 7)):
+            return False
+
+        # перемещаем короля и ладью
+        self.field[row][5] = rook
+        self.field[row][6] = king
+        self.field[row][7] = None
+        self.field[row][4] = None
+
+        # фигурами походили
+        rook.was_moved = True
+        king.was_moved = True
+
+        # меняем цвет игрока
+        self.color = WHITE if self.color == BLACK else BLACK
         return True
 
     def get_piece(self, row, col):
